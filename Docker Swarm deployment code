@@ -1,0 +1,55 @@
+#user data to be inserted inyour EC2 instance
+#!/usr/bin/env bash
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get -y update
+sudo apt-get -y install docker-ce
+
+#create Swarm Manager
+docker swarm init --advertise-addr 'Private IP address of Swarm Manager'
+
+#token code
+docker swarm join <token code>
+
+#confirm that control plane is Swarm Manager
+sudo docker info | grep “Is Manager”
+
+#The command below will create our nginx service, our replicas, publish our port to 8080 with target port of 80. 
+docker service create --name 'name' --replicas '#' -p 8080:80 nginx 
+
+#Check running services
+docker service ls
+
+#Confrim Nginx service was installed
+curl localhost:8080
+
+#Remove service
+docker service rm ‘name’
+
+#Create compose file
+vim docker-compose.yml
+
+#Insert the code below into the vim editor for the YAML file in line 31
+version : '3'
+
+services:
+  web:
+    image: nginx
+    ports:
+      - "8080:80"
+    deploy:
+      replicas: 6
+
+#Deploy Stack
+docker stack deploy — compose-file docker-compose.yml ‘name’
+      
+#View stacks and list the tasks in the stacks     
+sudo docker stack ls
+sudo docker stack ps <name of service>
+     
+#drain node
+docker node update --availability drain 'node'
+     
+#Get the nodes back up and running 
+docker node update — availability active ‘node’
